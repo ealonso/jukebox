@@ -24,7 +24,11 @@ long artistId = ParamUtil.getLong(renderRequest, "artistId");
 <liferay-ui:success key="albumUpdated" message="the-album-was-updated-successfully" />
 <liferay-ui:success key="albumDeleted" message="the-album-was-deleted-successfully" />
 
-<jsp:include page="/html/albums/toolbar.jsp" />
+<liferay-portlet:renderURL varImpl="searchURL" />
+
+<aui:form action="<%= searchURL.toString() %>" method="get" name="fm">
+	<jsp:include page="/html/albums/toolbar.jsp" />
+</aui:form>
 
 <%
 List<Album> albums = null;
@@ -33,7 +37,39 @@ if (artistId > 0) {
 	albums = AlbumLocalServiceUtil.getAlbumsByArtistId(artistId);
 }
 else {
-	albums = AlbumServiceUtil.getAlbums(scopeGroupId);
+	String keywords = ParamUtil.getString(request, "keywords");
+
+	if (Validator.isNotNull(keywords)) {
+		Indexer indexer = IndexerRegistryUtil.getIndexer(Album.class);
+
+		SearchContext searchContext = SearchContextFactory.getInstance(request);
+
+		searchContext.setKeywords(keywords);
+
+		Hits hits = indexer.search(searchContext);
+
+		for (int i = 0; i < hits.getDocs().length; i++) {
+			Document doc = hits.doc(i);
+
+			long albumId = GetterUtil.getLong(doc.get(Field.ENTRY_CLASS_PK));
+
+			Album album = null;
+
+			try {
+				album = AlbumLocalServiceUtil.getAlbum(albumId);
+
+				album = album.toEscapedModel();
+			}
+			catch (Exception e) {
+				continue;
+			}
+
+			albums.add(album);
+		}
+	}
+	else {
+		albums = AlbumServiceUtil.getAlbums(scopeGroupId);
+	}
 }
 %>
 

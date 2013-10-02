@@ -20,10 +20,48 @@
 <liferay-ui:success key="artistUpdated" message="the-artist-was-updated-successfully" />
 <liferay-ui:success key="artistDeleted" message="the-artist-was-deleted-successfully" />
 
-<jsp:include page="/html/artists/toolbar.jsp" />
+<liferay-portlet:renderURL varImpl="searchURL" />
+
+<aui:form action="<%= searchURL.toString() %>" method="get" name="fm">
+	<jsp:include page="/html/artists/toolbar.jsp" />
+</aui:form>
 
 <%
-List<Artist> artists = ArtistServiceUtil.getArtists(scopeGroupId);
+String keywords = ParamUtil.getString(request, "keywords");
+
+List<Artist> artists = null;
+
+if (Validator.isNotNull(keywords)) {
+	Indexer indexer = IndexerRegistryUtil.getIndexer(Artist.class);
+
+	SearchContext searchContext = SearchContextFactory.getInstance(request);
+
+	searchContext.setKeywords(keywords);
+
+	Hits hits = indexer.search(searchContext);
+
+	for (int i = 0; i < hits.getDocs().length; i++) {
+		Document doc = hits.doc(i);
+
+		long artistId = GetterUtil.getLong(doc.get(Field.ENTRY_CLASS_PK));
+
+		Artist artist = null;
+
+		try {
+			artist = ArtistLocalServiceUtil.getArtist(artistId);
+
+			artist = artist.toEscapedModel();
+		}
+		catch (Exception e) {
+			continue;
+		}
+
+		artists.add(artist);
+	}
+}
+else {
+	artists = ArtistServiceUtil.getArtists(scopeGroupId);
+}
 %>
 
 <c:choose>
