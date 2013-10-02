@@ -26,15 +26,6 @@ long albumId = ParamUtil.getLong(renderRequest, "albumId");
 
 <jsp:include page="/html/songs/toolbar.jsp" />
 
-<c:if test='<%= JukeBoxPermission.contains(permissionChecker, scopeGroupId, "ADD_SONG") %>'>
-	<portlet:renderURL var="editSongURL">
-		<portlet:param name="jspPage" value="/html/songs/edit_song.jsp" />
-		<portlet:param name="redirect" value="<%= PortalUtil.getCurrentURL(renderRequest) %>" />
-	</portlet:renderURL>
-
-	<liferay-ui:icon image="add" label="<%= true %>" message="add-song" url="<%= editSongURL %>" />
-</c:if>
-
 <%
 List<Song> songs = null;
 
@@ -74,13 +65,7 @@ else {
 					Album album = AlbumLocalServiceUtil.getAlbum(song.getAlbumId());
 					%>
 
-					<portlet:renderURL var="viewSongURL">
-						<portlet:param name="jspPage" value="/html/songs/view_song.jsp" />
-						<portlet:param name="songId" value="<%= String.valueOf(song.getSongId()) %>" />
-						<portlet:param name="redirect" value="<%= PortalUtil.getCurrentURL(renderRequest) %>" />
-					</portlet:renderURL>
-
-					<aui:a href="<%= viewSongURL %>" label="<%= song.getName() %>" />, <%= artist.getName() %>, <%= album.getName() %>
+					<%= song.getName() %>, <%= artist.getName() %>, <%= album.getName() %>
 
 					<c:if test="<%= SongPermission.contains(permissionChecker, song.getSongId(), ActionKeys.UPDATE) %>">
 						<portlet:renderURL var="editSongURL">
